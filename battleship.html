@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html>
+<style>
+table {
+    border: 1px solid black;
+    
+}
+
+th,td{
+	border: 1px solid black;
+    width: 50px;
+	height: 50px;
+	background-color: #ADD8E6;
+}
+</style>
+	<script>
+	var player1AL=new Array(5);//to store player1's ships' location
+	var player1SL=new Array(3);
+	var player1BL=new Array(4);
+	
+	var player2AL=new Array(5);//to store player2's ships' location
+	var player2SL=new Array(3);
+	var player2BL=new Array(4);
+	var player1TotalScore=0;
+	var player2TotalScore=0;
+	var player1Nam;				//to remember names
+	var player2Nam;
+	
+	var turn=0;				//i used 0 and 1 to represent the turn, if it is 0, then player1 plays,else player2 plays
+	function askShips(player){	//setting up the ships
+		var Loc = prompt("Enter your airCraftCarrier,submarine and battleshit loction","A:A1-A5;B:B1-B4;S:C1-C3");
+			if(Loc==null){			//the rest operations can proceed only if process is not null
+				alert("invalid input, nothing happens");
+				return 1;
+			}
+			else{			//specify the player situation
+				if(player==="player1"){
+					processInput(Loc,player);
+				}
+				else if(player==="player2"){
+					processInput(Loc,player);					
+				}
+			}		
+	}
+	
+	function processInput(input,player){//map the userinput to our table
+		var Loc=new Array(3);//remember the locations
+		var Type=new Array(3);
+	
+		if (input.indexOf(':') > -1){//check if there are ':' in the string first
+			processInputVariation( ':', Loc, Type,input );
+		}	
+		else{			//situation where there is no ':',directly do the second split
+			processInputVariation('(', Loc, Type, input);
+		}
+		var result=new Array(2);
+			for(var i=0;i<Loc.length;i++){
+				result=conveLetter_Num(Loc[i]);
+				deployShips(Type,result[0],result[1],i,player);//should pass two index
+			}
+	}
+	
+	function mappingValues(index,index1,player, shipType){
+		var maxShipLength =0;
+		var playerShip;
+		if(shipType ==="A")
+			maxShipLength = 5;
+		else if (shipType ==="B")
+			maxShipLength = 4;
+		else if( shipType === "S" )
+			maxShipLength = 3;
+		
+		if(parseInt(index1)-parseInt(index)<=10){
+			if(player==="player1"){		//also check the player length here
+				
+				for(var k=0;k< maxShipLength;k++){
+					if(maxShipLength === 5)
+						player1AL[k]=parseInt(index)+k;
+					else if(maxShipLength ===4 )
+						player1BL[k]=parseInt(index)+k;
+					else if( maxShipLength ===3)
+						player1SL[k]=parseInt(index)+k;
+				}
+				if(maxShipLength === 5)
+					player1AL = player1AL.map(value => -value);
+				else if(maxShipLength ===4 )
+					player1BL = player1BL.map(value => -value);
+				else if( maxShipLength ===3)
+					player1SL = player1SL.map(value => -value);				
+			}
+			else if(player==="player2"){
+				
+				for(var k=0;k<maxShipLength;k++){
+					if(maxShipLength === 5)
+						player2AL[k]=parseInt(index)+k+200;
+					else if(maxShipLength ===4 )
+						player2BL[k]=parseInt(index)+k+200;
+					else if( maxShipLength ===3)
+						player2SL[k]=parseInt(index)+k+200;
+				}
+				if(maxShipLength === 5)
+					player2AL = player2AL.map(value => -value);
+				else if(maxShipLength ===4 )
+					player2BL = player2BL.map(value => -value);
+				else if( maxShipLength ===3)
+					player2SL = player2SL.map(value => -value);
+				
+			}
+		}
+		else{//vertical layout
+			if(player==="player1"){
+
+				for(var k=0;k<maxShipLength;k++){
+					if(maxShipLength === 5)
+						player1AL[k]=parseInt(index)+10*k;
+					else if(maxShipLength ===4 )
+						player1BL[k]=parseInt(index)+10*k;
+					else if( maxShipLength ===3)
+						player1SL[k]=parseInt(index)+10*k;
+				}
+				if(maxShipLength === 5)
+					player1AL = player1AL.map(value => -value);
+				else if(maxShipLength ===4 )
+					player1BL = player1BL.map(value => -value);
+				else if( maxShipLength ===3)
+					player1SL = player1SL.map(value => -value);
+			}
+			else if(player==="player2"){
+				for(var k=0;k<maxShipLength;k++){
+					if(maxShipLength === 5)
+						player2AL[k]=parseInt(index)+10*k+200;
+					else if(maxShipLength ===4 )
+						player2BL[k]=parseInt(index)+10*k+200;
+					else if( maxShipLength ===3)
+						player2SL[k]=parseInt(index)+10*k+200;
+				}
+				if(maxShipLength === 5)
+					player2AL = player2AL.map(value => -value);
+				else if(maxShipLength ===4 )
+					player2BL = player2BL.map(value => -value);
+				else if( maxShipLength ===3)
+					player2SL = player2SL.map(value => -value);
+				
+			}
+		}
+	}
+	
+	function deployShips(Type,index,index1,i,player){
+		if(Type[i]==="A"){		//horizontal layout
+			mappingValues(index,index1,player, "A");
+		}
+		else if(Type[i]==="B"){
+			mappingValues(index,index1,player, "B");;
+		}
+		else if(Type[i]==="S"){
+			mappingValues(index,index1,player, "S");
+		}
+	}
+	
+	function processInputVariation( splitSymbol, Loc, Type, input ){
+		var newTxt;
+		var firstSplit;
+		var secondSplit;
+		var LocCount=0;
+		var typeCount=0;
+		if ( splitSymbol === ':' ){
+			newTxt = input.split(':');
+			firstSplit = ';';
+			secondSplit = ';';
+		}
+		else if(splitSymbol === '('){
+			newTxt = input.split('(');
+			firstSplit = '(';
+			secondSplit = ')';
+		}
+		Type[0]=newTxt[0];
+		typeCount++;
+		for (var i = 1; i < newTxt.length; i++) {
+			if(LocCount<3){
+				Loc[LocCount]=newTxt[i].split(firstSplit)[0];
+					if(typeCount<3){
+						Type[typeCount]=newTxt[i].split(secondSplit)[1];
+						if( Type[ typeCount ].length > 1 ){	//special case, need to use the only second char
+							Type[typeCount]=Type[typeCount][1];
+						}
+					}
+				typeCount++;
+				LocCount++;
+			}		
+		}
+	}
+	
+	function conveLetter_Num(input){
+		var letterPattern=/[A-Za-z]/g;	
+		var numberPattern=/[0-9]/g;
+		var numberResultArray=new Array(2);
+		var letterResult=input.match(letterPattern);
+		var numberResult=input.match(numberPattern);
+		for(var i=0;i<numberResult.length;i++){	
+			if(numberResult[i]==0){		
+				numberResultArray[i-1]=numberResult[i-1]+numberResult[i];//cobmine 
+			}
+			numberResultArray[i]=numberResult[i];
+		}
+		var result=new Array(2);
+		
+		result[0]=(parseInt(numberResultArray[0])-1)*10 + convertToInt(  letterResult[0].toString() );//have some errors here, should return 10 instead of 1
+		result[1]=(parseInt(numberResultArray[1])-1)*10 + convertToInt(  letterResult[1].toString() );		
+		
+		return result;
+	}
+	
+	function convertToInt(letter){
+		if(letter==='A'||letter==='a'){
+			letter=" ";
+		}
+		else if(letter==='B'||letter==='b'){
+			letter=1;
+		}
+		else if(letter==='C'||letter==='C'){
+			letter=2;
+		}
+		else if(letter==='D'||letter==='d'){
+			letter=3;
+		}
+		else if(letter==='E'||letter==='e'){
+			letter=4;
+		}
+		else if(letter==='F'||letter==='f'){
+			letter=5;
+		}
+		else if(letter==='G'||letter==='g'){
+			letter=6;
+		}
+		else if(letter==='H'||letter==='h'){
+			letter=7;
+		}
+		else if(letter==='I'||letter==='i'){
+			letter=8;
+		}
+		else if(letter==='J'||letter==='j'){
+			letter=9;
+		}
+		else{			//invalid input
+			alert("invalid is invalid, sorry");//try to break the program here
+		}
+		return letter;
+	}
+	
+	function checkAirC(count){
+	var i=0;
+	var deployAirC=false;
+		if(count>-200){//first player's smallmap
+			while(i<player1AL.length){
+				if(player1AL[i]===count){
+					deployAirC=true;
+					break;
+				}
+			i++;
+			}
+		}
+		else if(count<=-200){//second player's smallmap
+			while(i<player2AL.length){
+				if(player2AL[i]===count){
+					deployAirC=true;
+					
+					break;
+				}
+			i++;
+			}
+		}
+		return deployAirC;
+	}
+	
+	function checkBatS(count){
+	var i=0;
+	var deployBatS=false;
+		if( count>-200 ){
+			while(i<player1BL.length){
+				if(player1BL[i]===count){
+					deployBatS=true;
+					break;
+				}
+			i++;
+			}
+		}
+		else if( count<=-200 ){
+			while(i<player2BL.length){
+				if(player2BL[i]===count){
+					deployBatS=true;
+					break;
+				}
+			i++;
+			}
+		}		
+		return deployBatS;
+	}
+	function checkSuM(count){
+	var i=0;
+	var deploySuM=false;
+		if( count>-200 ){
+			while(i<player1SL.length){
+				if(player1SL[i]===count){
+					deploySuM=true;
+					break;
+				}
+			i++;
+			}
+		}
+		else if( count<=-200 ){
+			while(i<player2SL.length){
+				if(player2SL[i]===count){
+					deploySuM=true;
+					break;
+				}
+			i++;
+			}
+		}
+		return deploySuM;
+	}
+	
+	function paintRoundResult(hitThings,e){//need to figure out e.location
+		var target = (e || window.event).target;	
+		if(hitThings){//set target's e.target.id==-200's color to the same color also
+			target.setAttribute('style', 'background-color: #F00');
+			var target2=document.getElementById((-(e.target.id)));//color the other player's map 
+			target2.setAttribute('style', 'background-color: #F00');
+		}
+		else{
+			target.setAttribute('style', 'background-color: #FFF');			
+			var target2=document.getElementById((-(e.target.id))); //color the other player's map 
+			target2.setAttribute('style', 'background-color: #FFF');
+			
+		}
+	}
+	
+	function MarkHitAndcheckSink(hitObject,e){		//need to give the location and mark off the array, check in the end if the array is null, if is, print sink boat
+		var i,j,k;
+		var notHitSquareExist=false;
+		if(hitObject==="A"){		//hit airCraftCarrier
+			 i=0;
+				if(-(e.target.id)>-200){
+					while(i<player1AL.length){
+						if(player1AL[i]===-(e.target.id)){
+							player1AL[i]=null;//set to null
+							break;
+						}
+						i++;
+					}
+					for(m=0;m<player1AL.length;m++){
+						if(player1AL[m]!=null){
+							notHitSquareExist=true;
+						}
+					}
+				}
+				else if(-(e.target.id)<=-200){
+					while(i<player2AL.length){
+						if(player2AL[i]===-(e.target.id)){
+							player2AL[i]=null;//set to null
+							break;
+						}
+						i++;
+					}
+					for(m=0;m<player2AL.length;m++){
+						if(player2AL[m]!=null){
+							notHitSquareExist=true;
+						}
+					}
+				}
+				if(!notHitSquareExist){
+				  alert("airCraftCarrier has been sinked");
+				}
+		}
+		else if(hitObject==="B"){			//hit battleship
+			 j=0;
+				if(-(e.target.id)>-200){
+					while(j<player1BL.length){
+						if(player1BL[j]===-(e.target.id)){
+							player1BL[j]=null;	//set to null
+							break;
+						}
+					j++;
+					}
+					for(n=0;n<player1BL.length;n++){
+						if(player1BL[n]!=null){
+							notHitSquareExist=true;
+						}
+					}
+				}
+				else if(-(e.target.id)<=-200){
+					while(j<player2BL.length){
+						if(player2BL[j]===-(e.target.id)){
+							player2BL[j]=null;		//set to null
+							break;
+						}
+					j++;
+					}
+					for(n=0;n<player2BL.length;n++){
+						if(player2BL[n]!=null){
+							notHitSquareExist=true;
+						}
+					}
+				}
+				
+				if(!notHitSquareExist){
+				  alert("battleship has been sinked");
+				}
+		}
+		else if(hitObject==="S"){//hit submirine
+			 k=0;
+				if(-(e.target.id)>-200){
+					while(k<player1SL.length){
+						if(player1SL[k]===-(e.target.id)){
+							player1SL[k]=null;		//set to null
+							break;
+						}
+					k++;
+					}
+					for(m=0;m<player1SL.length;m++){
+						if(player1SL[m]!=null){
+							notHitSquareExist=true;
+						}
+					}
+				}
+				else if(-(e.target.id)<=-200){
+					while(k<player2SL.length){
+						if(player2SL[k]===-(e.target.id)){
+							player2SL[k]=null;		//set to null
+							break;
+						}
+					k++;
+					}
+					for(m=0;m<player2SL.length;m++){
+						if(player2SL[m]!=null){
+							notHitSquareExist=true;
+						}
+					}
+				}				
+				if(!notHitSquareExist){
+				  alert("submarine has been sinked");
+				}
+		}		
+	}
+	
+	
+	function clickAndCheck(e){							//need to specify when to check which in the markhit method 
+		var hitAirC=false;
+		var hitBat=false;
+		var hitSub=false;
+		var btn1=document.getElementById('button1');	//two buttons to blank and recover pages
+		var btn2=document.getElementById('button2');
+		var innerDiv=document.getElementById('innerDiv');
+		hitAirC=checkAirC(-(e.target.id));				//the e.target.id is also the count number
+		if(hitAirC){
+			alert("hit the AirCraftCarrier ");
+			paintRoundResult(hitAirC,e);
+			MarkHitAndcheckSink("A",e);
+			calculateScore(turn);
+		}
+		else{
+		hitBat=checkBatS(-(e.target.id));	
+			if(hitBat){
+				alert("hit the battleship  ");
+				paintRoundResult(hitBat,e);
+				MarkHitAndcheckSink("B",e);
+				calculateScore(turn);
+			}
+			else{
+				hitSub=checkSuM(-(e.target.id));
+					if(hitSub){
+						alert("hit the submarine ");
+						paintRoundResult(hitSub,e);
+						MarkHitAndcheckSink("S",e);
+						calculateScore(turn);
+					}
+					else{
+						alert("didn't hit any thing ");
+						paintRoundResult(hitSub,e);
+					}
+			}
+		}
+		if( player1TotalScore === 24 || player2TotalScore === 24 ){	//winning condition
+			gameEnd();
+		}		
+		if(turn===0){	//change turns
+			turn=1;
+			innerDiv.style.display='none';
+			btn1.style.display='block';				
+		}
+		else if(turn==1){
+			turn=0;
+			innerDiv.style.display='none';
+			btn1.style.display='block';	
+		}				
+	}
+	
+	function gameEnd(){
+		var div1=document.getElementById('outerDiv');
+		var theList=document.getElementById('theList');
+		var theTitle=document.getElementById('title');
+		var record;
+		div1.style.display='none';
+		winnerScore = 0;
+		if( player1TotalScore === 24 ){//player1 wins
+			player1TotalScore = player1TotalScore - player2TotalScore;
+			alert( "player1 "+ player1Nam + " wins and the score for player2 is " + player2TotalScore );
+			record=player1Nam+" score is "+player1TotalScore;
+			winnerScore = player1TotalScore;
+		}
+		else if(player2TotalScore === 24 ){
+			player2TotalScore=player2TotalScore-player1TotalScore;
+			alert("player2 " + player2Nam + " wins and the score for player1 is " + player1TotalScore );
+			record=player2Nam + " score is " + player2TotalScore;
+			winnerScore = player2TotalScore;
+		}
+		alert("the record is "+record);
+		
+		add( record, winnerScore );		//adding record into the list
+		readLocalData();	//show the list
+		record=null;        //reset record so that we can add it the next time
+		theTitle.style.display='block';
+		theList.style.display='block';
+	}
+	
+	function add( record,winnerScore ) {
+		var response = record;
+			if (typeof(Storage) !== "undefined") {
+				theList = document.getElementById("theList");
+				for (var i = 0; i < 9; i++) {
+					var existingRecord = localStorage.getItem(i);
+					if( existingRecord!== null ){
+						var tempScore = existingRecord.match(/[0-9]+/);
+						if( winnerScore > tempScore ){ //the condition to set the current score into the original position
+							localStorage.setItem(i, response);
+							response = existingRecord;
+						}
+					}
+								
+				}
+				var i = localStorage.length;	//update the score and set the top 10 scores
+				localStorage.setItem(i, response);
+			}
+	}
+	
+	function addListItem(newText) {
+		var theList = document.getElementById("theList");
+		var listItem = document.createElement("li");
+		listItem.appendChild(document.createTextNode(newText));
+		theList.appendChild(listItem);
+	}
+	
+	function readLocalData() {
+		if (typeof(Storage) !== "undefined") {
+			theList = document.getElementById("theList");
+			for (var i = 0; i < 9; i++) {
+				addListItem(localStorage.getItem(i));
+			}
+		}
+	}
+	
+	function calculateScore(turn){
+		if(turn===0){
+			player1TotalScore=player1TotalScore+2;
+		}
+		else if(turn===1){
+			player2TotalScore=player2TotalScore+2;		
+		}
+	}	
+	
+	function setMyTable(player){
+		if(player==="player1"){
+			var table=document.getElementById("myTable");
+				if(table!=null){
+					var count=0;
+					for(i=0;i<11;i++){
+						var row=table.insertRow(i);
+							for(j=0;j<11;j++){
+								var cell=row.insertCell(j);
+								if( i > 0 && j > 0 ){	//leave the first cell blank, the first rows will be marked as 1-10 and the first column will be marked as A-J
+									cell.addEventListener('click',clickAndCheck,false);
+									cell.innerHTML=" ";
+									cell.id=count;
+									count++;
+								}
+								else if( j > 0 && i===0 ){	//if it is the first row
+									if( j === 1 )
+										cell.innerHTML="A"
+									if( j === 2 )
+										cell.innerHTML="B"
+									if( j === 3 )
+										cell.innerHTML="C"
+									if( j === 4 )
+										cell.innerHTML="D"
+									if( j === 5 )
+										cell.innerHTML="E"
+									if( j === 6 )
+										cell.innerHTML="F"
+									if( j === 7 )
+										cell.innerHTML="G"
+									if( j === 8 )
+										cell.innerHTML="H"
+									if( j === 9 )
+										cell.innerHTML="I"
+									if( j === 10 )
+										cell.innerHTML="J"	
+								}
+								else if( i > 0 && j===0 ){
+									if( i === 1 )
+										cell.innerHTML="1"
+									if( i === 2 )
+										cell.innerHTML="2"
+									if( i === 3 )
+										cell.innerHTML="3"
+									if( i === 4 )
+										cell.innerHTML="4"
+									if( i === 5 )
+										cell.innerHTML="5"
+									if( i === 6 )
+										cell.innerHTML="6"
+									if( i === 7 )
+										cell.innerHTML="7"
+									if( i === 8 )
+										cell.innerHTML="8"
+									if( i === 9 )
+										cell.innerHTML="9"
+									if( i === 10 )
+										cell.innerHTML="10"	
+								}
+								
+							}
+					}
+				}
+			document.addEventListener('click', function(e) {
+			e = e || window.event;
+			var target = e.target.id || e.srcElement,
+			text = target.textContent;   
+			}, false);
+		}
+		else if(player==="player2"){//player2's table has to be different than player1's
+			var table1=	document.getElementById("myTable1");
+				if(table1!=null){
+					count = 200;
+						for( i=0;i<11;i++ ){
+							var row=table1.insertRow(i);
+							for( j=0;j<11;j++ ){
+								var cell=row.insertCell(j);
+								
+								if( i > 0 && j > 0 ){	//leave the first cell blank, the first rows will be marked as 1-10 and the first column will be marked as A-J
+									cell.addEventListener('click',clickAndCheck,false);
+									cell.innerHTML=" ";
+									cell.id=count;
+									count++;
+								}
+								else if( j > 0 && i===0 ){	//if it is the first row
+									if( j === 1 )
+										cell.innerHTML="A"
+									if( j === 2 )
+										cell.innerHTML="B"
+									if( j === 3 )
+										cell.innerHTML="C"
+									if( j === 4 )
+										cell.innerHTML="D"
+									if( j === 5 )
+										cell.innerHTML="E"
+									if( j === 6 )
+										cell.innerHTML="F"
+									if( j === 7 )
+										cell.innerHTML="G"
+									if( j === 8 )
+										cell.innerHTML="H"
+									if( j === 9 )
+										cell.innerHTML="I"
+									if( j === 10 )
+										cell.innerHTML="J"	
+								}
+								else if( i > 0 && j===0 ){
+									if( i === 1 )
+										cell.innerHTML="1"
+									if( i === 2 )
+										cell.innerHTML="2"
+									if( i === 3 )
+										cell.innerHTML="3"
+									if( i === 4 )
+										cell.innerHTML="4"
+									if( i === 5 )
+										cell.innerHTML="5"
+									if( i === 6 )
+										cell.innerHTML="6"
+									if( i === 7 )
+										cell.innerHTML="7"
+									if( i === 8 )
+										cell.innerHTML="8"
+									if( i === 9 )
+										cell.innerHTML="9"
+									if( i === 10 )
+										cell.innerHTML="10"	
+								}
+
+							}
+						}
+				}
+			document.addEventListener('click', function(e) {
+			e = e || window.event;
+			var target = e.target.id || e.srcElement,
+			text = target.textContent;   
+			}, false);
+		}	
+	}
+	
+	function chekDeployment(deployAirC,deployBatS,deploySuM){
+		needToDeploy=false;
+		if(deployAirC||deployBatS||deploySuM){
+			needToDeploy=true;
+		}
+		return needToDeploy;
+	}
+	
+	function playerEndTurn(){
+	var btn1=document.getElementById('button1');//two buttons to blank and recover pages
+	var btn2=document.getElementById('button2');
+		btn1.style.display='none';
+			if(turn===1){
+				alert(player2Nam+" to start current turn");
+			}
+			else if(turn===0){
+				alert("click to play "+player1Nam+" to start");			
+			}
+		btn2.style.display='block';
+	}
+	
+	function playerBeginnTurn(){
+		var btn2=document.getElementById('button2');
+		var innerDiv=document.getElementById('innerDiv');
+		var table = document.getElementById('myTable');
+		var table1 = document.getElementById('myTable1');
+		var smallTable = document.getElementById('smallTable');
+		var smallTable1 = document.getElementById('smallTable1');
+		btn2.style.display='none';
+		innerDiv.style.display='block';		//table reappear again		
+			if(turn===1){
+				table.style.display='block';
+				smallTable.style.display='none';
+				table1.style.display='none';
+				smallTable1.style.display='block';
+			}
+			else if(turn===0){
+				table.style.display='none';
+				smallTable.style.display='block';
+				table1.style.display='block';
+				smallTable1.style.display='none';
+			}					
+	}
+	
+	function setSmallTable(player){		//draw the map below
+	var count=0;		//reset the count so that you can't click the small map
+	var sTable=document.getElementById("smallTable");
+	var sTable1=document.getElementById("smallTable1");
+		if(player==="player1"){
+			for(m=0;m<11;m++){
+				var row=sTable.insertRow(m);
+				for(n=0;n<11;n++){		//i,j corresponding to mn here
+					var cell=row.insertCell(n);
+					if( n > 0 && m===0 ){	//if it is the first row
+						if( n === 1 )
+							cell.innerHTML="A"
+						if( n === 2 )
+							cell.innerHTML="B"
+						if( n === 3 )
+							cell.innerHTML="C"
+						if( n === 4 )
+							cell.innerHTML="D"
+						if( n === 5 )
+							cell.innerHTML="E"
+						if( n === 6 )
+							cell.innerHTML="F"
+						if( n === 7 )
+							cell.innerHTML="G"
+						if( n === 8 )
+							cell.innerHTML="H"
+						if( n === 9 )
+							cell.innerHTML="I"
+						if( n === 10 )
+							cell.innerHTML="J"	
+						}
+					else if( m > 0 && n===0 ){
+						if( m === 1 )
+							cell.innerHTML="1"
+						if( m === 2 )
+							cell.innerHTML="2"
+						if( m === 3 )
+							cell.innerHTML="3"
+						if( m === 4 )
+							cell.innerHTML="4"
+						if( m === 5 )
+							cell.innerHTML="5"
+						if( m === 6 )
+							cell.innerHTML="6"
+						if( m === 7 )
+							cell.innerHTML="7"
+						if( m === 8 )
+							cell.innerHTML="8"
+						if( m === 9 )
+							cell.innerHTML="9"
+						if( m === 10 )
+							cell.innerHTML="10"	
+					}
+						
+					if( m > 0 && n>0 ){
+						var NeedToDeploy=false;
+						var deployAirC=false;
+						var deployBatS=false;
+						var deploySuM=false;
+						deployAirC=checkAirC(count);
+						NeedToDeploy=chekDeployment(deployAirC,deployBatS,deploySuM);
+						if(!NeedToDeploy){
+							deployBatS=checkBatS(count);
+							NeedToDeploy=chekDeployment(deployAirC,deployBatS,deploySuM);
+						}
+						if(!NeedToDeploy){
+							deploySuM=checkSuM(count);
+							NeedToDeploy=chekDeployment(deployAirC,deployBatS,deploySuM);
+						}
+						if(deployAirC){
+							cell.innerHTML="A";
+						}
+						if(deployBatS){
+							cell.innerHTML="B";
+						}							
+						if(deploySuM){
+							cell.innerHTML="S"
+						}
+						cell.id=count;
+						count--;
+					}	
+				}
+			}
+		}
+		
+		else if(player==="player2"){//second player's map
+		count = -200;	//count here should be changed into 200 to match the one in table1
+			for(m=0;m<11;m++){
+				var row=sTable1.insertRow(m);
+				for(n=0;n<11;n++){
+					var cell=row.insertCell(n);
+					if( n > 0 && m === 0 ){	//if it is the first row
+						if( n === 1 )
+							cell.innerHTML="A"
+						if( n === 2 )
+							cell.innerHTML="B"
+						if( n === 3 )
+							cell.innerHTML="C"
+						if( n === 4 )
+							cell.innerHTML="D"
+						if( n === 5 )
+							cell.innerHTML="E"
+						if( n === 6 )
+							cell.innerHTML="F"
+						if( n === 7 )
+							cell.innerHTML="G"
+						if( n === 8 )
+							cell.innerHTML="H"
+						if( n === 9 )
+							cell.innerHTML="I"
+						if( n === 10 )
+							cell.innerHTML="J"	
+						}
+					else if( m > 0 && n===0 ){
+						if( m === 1 )
+							cell.innerHTML="1"
+						if( m === 2 )
+							cell.innerHTML="2"
+						if( m === 3 )
+							cell.innerHTML="3"
+						if( m === 4 )
+							cell.innerHTML="4"
+						if( m === 5 )
+							cell.innerHTML="5"
+						if( m === 6 )
+							cell.innerHTML="6"
+						if( m === 7 )
+							cell.innerHTML="7"
+						if( m === 8 )
+							cell.innerHTML="8"
+						if( m === 9 )
+							cell.innerHTML="9"
+						if( m === 10 )
+							cell.innerHTML="10"	
+					}
+					
+					if( m > 0 && n > 0 ){	//leave the first cell blank, the first rows will be marked as 1-10 and the first column will be marked as A-J
+						var NeedToDeploy=false;
+						var deployAirC=false;
+						var deployBatS=false;
+						var deploySuM=false;
+						deployAirC=checkAirC(count);
+						NeedToDeploy=chekDeployment(deployAirC,deployBatS,deploySuM);
+						if(!NeedToDeploy){
+							deployBatS=checkBatS(count);
+							NeedToDeploy=chekDeployment(deployAirC,deployBatS,deploySuM);
+						}
+						if(!NeedToDeploy){
+							deploySuM=checkSuM(count);
+							NeedToDeploy=chekDeployment(deployAirC,deployBatS,deploySuM);
+						}						
+						if(deployAirC){
+							cell.innerHTML="A";
+						}
+						if(deployBatS){
+							cell.innerHTML="B";
+						}
+						if(deploySuM){
+							cell.innerHTML="S";
+						}
+						cell.id=count;
+						count--;
+					}
+				}
+			}
+		}
+	}
+
+	window.onload = function() {
+	var count=0;
+	var player;
+		while(count<=1){
+			var askResult
+			if(count===0){
+				alert("player1 please enter your name ");
+				player1Nam= prompt("example:Luke Skywalker");
+				askResult=askShips("player1");//			
+				player="player1";
+			}
+			else{
+				alert("player2 please enter your name ");
+				player2Nam= prompt("example:Darth Vader");
+				askResult=askShips("player2");
+				player="player2";
+				alert("now is player "+player1Nam+"'s turn");	//indicate the first player's turn
+			}
+			if(askResult!==1){
+				setSmallTable(player);
+				setMyTable(player);					
+			}
+			else{
+				alert("invalid input, program end");
+			}
+			count++;
+		}		
+	}
+	</script>
+ <body >
+	<h1 id="title" style="display: none">top 10 players in the game:</h1>
+	<ol id="theList" style="display: none">
+	</ol>
+	<div id="outerDiv">
+		<input type="button" id="button1" onclick="playerEndTurn()" value="click here to finish your round" style="display: none">
+		<input type="button" id="button2" onclick="playerBeginnTurn()" value="click here to start your round" style="display: none">
+		<div id="innerDiv">
+			<p>opponent's map, u can only choose to hit at places in the 10*10 grid made of combinations of A-Z+0-9(other cells are labels)</p>
+		
+			<table id="myTable" style="display: none"></table>
+			<table id="myTable1" >
+			</table>
+		
+			<p>small map is below(your ships' locations):</p>
+			<table id="smallTable" ></table>
+			<table id="smallTable1" style="display: none"></table>
+		</div>
+	</div>	
+	
+ </body>
+</html>
+
+
